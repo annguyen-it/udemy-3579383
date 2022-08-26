@@ -1,11 +1,13 @@
 package main
 
 import (
+	"encoding/gob"
 	"fmt"
 	"github.com/alexedwards/scs/v2"
-	"learn-golang/pkg/config"
-	"learn-golang/pkg/handlers"
-	"learn-golang/pkg/render"
+	"learn-golang/internal/config"
+	"learn-golang/internal/handlers"
+	"learn-golang/internal/models"
+	"learn-golang/internal/render"
 	"log"
 	"net/http"
 	"time"
@@ -18,9 +20,13 @@ var session *scs.SessionManager
 
 // main is the main application function
 func main() {
-	// Change this to true when in production
+	// what am I going to put in the session
+	gob.Register(models.Reservation{})
+
+	// change this to true when in production
 	app.InProduction = false
 
+	// setup the session
 	session = scs.New()
 	session.Lifetime = 24 * time.Hour
 	session.Cookie.Persist = true
