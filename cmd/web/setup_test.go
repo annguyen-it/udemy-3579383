@@ -10,6 +10,6 @@ func TestMain(m *testing.M) {
 	os.Exit(m.Run())
 }
 
-type myHandler struct{}
+type testHandler struct{}
 
-func (mh *myHandler) ServeHTTP(_ http.ResponseWriter, _ *http.Request) {}
+func (h *testHandler) ServeHTTP(_ http.ResponseWriter, _ *http.Request) {}
