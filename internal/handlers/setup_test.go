@@ -13,11 +13,12 @@ import (
 	"learn-golang/internal/render"
 	"log"
 	"net/http"
+	"os"
 	"path/filepath"
 	"time"
 )
 
-var app config.AppConfig
+var testApp config.AppConfig
 var session *scs.SessionManager
 var pathToTemplates = "./../../templates"
 var functions = template.FuncMap{}
@@ -27,28 +28,34 @@ func getRoutes() http.Handler {
 	gob.Register(models.Reservation{})
 
 	// change this to true when in production
-	app.InProduction = false
+	testApp.InProduction = false
+
+	infoLog := log.New(os.Stdout, "INFO\t", log.Ldate|log.Ltime)
+	testApp.InfoLog = infoLog
+
+	errorLog := log.New(os.Stdout, "ERROR\t", log.Ldate|log.Ltime|log.Lshortfile)
+	testApp.ErrorLog = errorLog
 
 	// set up the session
 	session = scs.New()
 	session.Lifetime = 24 * time.Hour
 	session.Cookie.Persist = true
 	session.Cookie.SameSite = http.SameSiteLaxMode
-	session.Cookie.Secure = app.InProduction
+	session.Cookie.Secure = testApp.InProduction
 
-	app.Session = session
+	testApp.Session = session
 
 	templateCache, err := CreateTestTemplateCache()
 	if err != nil {
 		log.Fatal("cannot create template cache")
 	}
 
-	app.TemplateCache = templateCache
-	app.UseCache = true
+	testApp.TemplateCache = templateCache
+	testApp.UseCache = true
 
-	repo := NewRepo(&app)
+	repo := NewRepo(&testApp)
 	NewHandlers(repo)
-	render.NewTemplates(&app)
+	render.NewTemplates(&testApp)
 
 	mux := chi.NewRouter()
 
@@ -83,7 +90,7 @@ func NoSurf(next http.Handler) http.Handler {
 	csrfHandler.SetBaseCookie(http.Cookie{
 		HttpOnly: true,
 		Path:     "/",
-		Secure:   app.InProduction,
+		Secure:   testApp.InProduction,
 		SameSite: http.SameSiteLaxMode,
 	})
 	return csrfHandler
