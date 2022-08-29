@@ -1,10 +1,14 @@
 package repository
 
-import "learn-golang/internal/models"
+import (
+	"learn-golang/internal/models"
+	"time"
+)
 
 type DatabaseRepo interface {
 	AllUsers() bool
 
-	InsertReservation(res models.Reservation) (int, error)
-	InsertRoomRestriction(m models.RoomRestriction) error
+	InsertReservation(models.Reservation) (int, error)
+	InsertRoomRestriction(models.RoomRestriction) error
+	SearchAvailabilityByDates(start, end time.Time, roomID string) (bool, error)
 }
