@@ -2,7 +2,6 @@ package handlers
 
 import (
 	"encoding/json"
-	"fmt"
 	"learn-golang/internal/config"
 	"learn-golang/internal/driver"
 	"learn-golang/internal/forms"
@@ -157,7 +156,44 @@ func (rp *Repository) PostAvailability(w http.ResponseWriter, r *http.Request) {
 	start := r.Form.Get("start")
 	end := r.Form.Get("end")
 
-	_, _ = w.Write([]byte(fmt.Sprintf("start date is %s and end date is %s", start, end)))
+	layout := "2006-01-02"
+	startDate, err := time.Parse(layout, start)
+	if err != nil {
+		helpers.ServerError(w, err)
+	}
+	endDate, err := time.Parse(layout, end)
+	if err != nil {
+		helpers.ServerError(w, err)
+	}
+
+	rooms, err := rp.DB.SearchAvailabilityForAllRooms(startDate, endDate)
+	if err != nil {
+		helpers.ServerError(w, err)
+		return
+	}
+
+	if len(rooms) == 0 {
+		// no availability
+		rp.App.Session.Put(r.Context(), "error", "No availability")
+		http.Redirect(w, r, "/search-availability", http.StatusSeeOther)
+		return
+	}
+
+	data := make(map[string]any)
+	data["rooms"] = rooms
+
+	res := models.Reservation{
+		StartDate: startDate,
+		EndDate:   endDate,
+	}
+
+	rp.App.Session.Put(r.Context(), "reservation", res)
+
+	_ = render.Template(
+		w, r, "choose-room.page.tmpl", &models.TemplateData{
+			Data: data,
+		},
+	)
 }
 
 type jsonResponse struct {
