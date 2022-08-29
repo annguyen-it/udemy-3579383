@@ -58,8 +58,8 @@ func (rp *postgresDBRepo) InsertRoomRestriction(m models.RoomRestriction) error 
 	return nil
 }
 
-// SearchAvailabilityByDates returns true if availability exists for roomID, and false otherwise
-func (rp *postgresDBRepo) SearchAvailabilityByDates(start, end time.Time, roomID string) (bool, error) {
+// SearchAvailabilityByDatesByRoomID returns true if availability exists for roomID, and false otherwise
+func (rp *postgresDBRepo) SearchAvailabilityByDatesByRoomID(start, end time.Time, roomID string) (bool, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
 
@@ -83,4 +83,42 @@ func (rp *postgresDBRepo) SearchAvailabilityByDates(start, end time.Time, roomID
 	}
 
 	return numRows == 0, nil
+}
+
+// SearchAvailabilityForAllRooms returns a slice of available rooms, if any, for given date range
+func (rp *postgresDBRepo) SearchAvailabilityForAllRooms(start, end time.Time) (rooms []models.Room, err error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
+	query := `
+        SELECT r.id, r.room_name
+        FROM rooms r 
+        WHERE 
+            r.id NOT IN
+                (SELECT room_id from room_restrictions rr WHERE $1 < rr.end_date AND $2 > rr.start_date)
+    `
+
+	rows, err := rp.DB.QueryContext(
+		ctx, query,
+		start, end,
+	)
+	if err != nil {
+		return
+	}
+
+	for rows.Next() {
+		var room models.Room
+		err = rows.Scan(&room.ID, room.RoomName)
+		if err != nil {
+			return
+		}
+
+		rooms = append(rooms, room)
+	}
+
+	if err = rows.Err(); err != nil {
+		return
+	}
+
+	return
 }
