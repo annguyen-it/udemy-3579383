@@ -12,6 +12,8 @@ import (
 	"learn-golang/internal/repository"
 	"learn-golang/internal/repository/dbrepo"
 	"net/http"
+	"strconv"
+	"time"
 )
 
 // Repo the repository used by handlers
@@ -52,10 +54,12 @@ func (rp *Repository) Reservation(w http.ResponseWriter, r *http.Request) {
 	data := make(map[string]any)
 	data["reservation"] = emptyReservation
 
-	_ = render.Template(w, r, "make-reservation.page.tmpl", &models.TemplateData{
-		Form: forms.New(nil),
-		Data: data,
-	})
+	_ = render.Template(
+		w, r, "make-reservation.page.tmpl", &models.TemplateData{
+			Form: forms.New(nil),
+			Data: data,
+		},
+	)
 }
 
 // PostReservation handles the posting of a reservation form
@@ -66,11 +70,32 @@ func (rp *Repository) PostReservation(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	sd := r.Form.Get("start_date")
+	ed := r.Form.Get("end_date")
+
+	layout := "2006-01-02"
+	startDate, err := time.Parse(layout, sd)
+	if err != nil {
+		helpers.ServerError(w, err)
+	}
+	endDate, err := time.Parse(layout, ed)
+	if err != nil {
+		helpers.ServerError(w, err)
+	}
+
+	roomID, err := strconv.Atoi(r.Form.Get("room_id"))
+	if err != nil {
+		helpers.ServerError(w, err)
+	}
+
 	reservation := models.Reservation{
 		FirstName: r.Form.Get("first_name"),
 		LastName:  r.Form.Get("last_name"),
 		Email:     r.Form.Get("email"),
 		Phone:     r.Form.Get("phone"),
+		StartDate: startDate,
+		EndDate:   endDate,
+		RoomID:    roomID,
 	}
 
 	form := forms.New(r.PostForm)
@@ -83,11 +108,18 @@ func (rp *Repository) PostReservation(w http.ResponseWriter, r *http.Request) {
 		data := make(map[string]any)
 		data["reservation"] = reservation
 
-		_ = render.Template(w, r, "make-reservation.page.tmpl", &models.TemplateData{
-			Form: form,
-			Data: data,
-		})
+		_ = render.Template(
+			w, r, "make-reservation.page.tmpl", &models.TemplateData{
+				Form: form,
+				Data: data,
+			},
+		)
 		return
+	}
+
+	err = rp.DB.InsertReservation(reservation)
+	if err != nil {
+		helpers.ServerError(w, err)
 	}
 
 	rp.App.Session.Put(r.Context(), "reservation", reservation)
@@ -158,7 +190,9 @@ func (rp *Repository) ReservationSummary(w http.ResponseWriter, r *http.Request)
 	data := make(map[string]any)
 	data["reservation"] = reservation
 
-	_ = render.Template(w, r, "reservation-summary.page.tmpl", &models.TemplateData{
-		Data: data,
-	})
+	_ = render.Template(
+		w, r, "reservation-summary.page.tmpl", &models.TemplateData{
+			Data: data,
+		},
+	)
 }
