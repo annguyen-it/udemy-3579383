@@ -4,10 +4,13 @@ import (
 	"encoding/json"
 	"fmt"
 	"learn-golang/internal/config"
+	"learn-golang/internal/driver"
 	"learn-golang/internal/forms"
 	"learn-golang/internal/helpers"
 	"learn-golang/internal/models"
 	"learn-golang/internal/render"
+	"learn-golang/internal/repository"
+	"learn-golang/internal/repository/dbrepo"
 	"net/http"
 )
 
@@ -17,12 +20,14 @@ var Repo *Repository
 // Repository is the repository type
 type Repository struct {
 	App *config.AppConfig
+	DB  repository.DatabaseRepo
 }
 
 // NewRepo creates a new repository
-func NewRepo(a *config.AppConfig) *Repository {
+func NewRepo(a *config.AppConfig, db *driver.DB) *Repository {
 	return &Repository{
 		App: a,
+		DB:  dbrepo.NewPostgresDBRepo(db.SQL, a),
 	}
 }
 
