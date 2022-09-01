@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"encoding/json"
+	"errors"
 	"github.com/go-chi/chi/v5"
 	"learn-golang/internal/config"
 	"learn-golang/internal/driver"
@@ -50,14 +51,35 @@ func (rp *Repository) About(w http.ResponseWriter, r *http.Request) {
 
 // Reservation renders the make a reservation page and display form
 func (rp *Repository) Reservation(w http.ResponseWriter, r *http.Request) {
-	var emptyReservation models.Reservation
+	res, ok := rp.App.Session.Get(r.Context(), "reservation").(models.Reservation)
+	if !ok {
+		helpers.ServerError(w, errors.New("cannot get reservation from session"))
+		return
+	}
+
+	room, err := rp.DB.GetRoomById(res.RoomID)
+	if err != nil {
+		helpers.ServerError(w, err)
+		return
+	}
+
+	res.Room = room
+
+	sd := res.StartDate.Format("2006-01-02")
+	ed := res.EndDate.Format("2006-01-02")
+
+	stringMap := make(map[string]string)
+	stringMap["start_date"] = sd
+	stringMap["end_date"] = ed
+
 	data := make(map[string]any)
-	data["reservation"] = emptyReservation
+	data["reservation"] = res
 
 	_ = render.Template(
 		w, r, "make-reservation.page.tmpl", &models.TemplateData{
-			Form: forms.New(nil),
-			Data: data,
+			Form:      forms.New(nil),
+			Data:      data,
+			StringMap: stringMap,
 		},
 	)
 }

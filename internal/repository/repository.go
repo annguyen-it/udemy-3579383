@@ -12,4 +12,5 @@ type DatabaseRepo interface {
 	InsertRoomRestriction(models.RoomRestriction) error
 	SearchAvailabilityByDatesByRoomID(start, end time.Time, roomID string) (bool, error)
 	SearchAvailabilityForAllRooms(start, end time.Time) ([]models.Room, error)
+	GetRoomById(id int) (models.Room, error)
 }
