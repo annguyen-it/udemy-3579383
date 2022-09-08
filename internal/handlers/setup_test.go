@@ -53,7 +53,7 @@ func getRoutes() http.Handler {
 	testApp.TemplateCache = templateCache
 	testApp.UseCache = true
 
-	repo := NewRepo(&testApp)
+	repo := NewTestRepo(&testApp)
 	NewHandlers(repo)
 	render.NewRenderer(&testApp)
 
@@ -87,12 +87,14 @@ func getRoutes() http.Handler {
 // NoSurf add CSRF protection to all POST request
 func NoSurf(next http.Handler) http.Handler {
 	csrfHandler := nosurf.New(next)
-	csrfHandler.SetBaseCookie(http.Cookie{
-		HttpOnly: true,
-		Path:     "/",
-		Secure:   testApp.InProduction,
-		SameSite: http.SameSiteLaxMode,
-	})
+	csrfHandler.SetBaseCookie(
+		http.Cookie{
+			HttpOnly: true,
+			Path:     "/",
+			Secure:   testApp.InProduction,
+			SameSite: http.SameSiteLaxMode,
+		},
+	)
 	return csrfHandler
 }
 
