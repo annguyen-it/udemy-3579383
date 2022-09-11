@@ -1,6 +1,7 @@
 package dbrepo
 
 import (
+	"errors"
 	"learn-golang/internal/models"
 	"time"
 )
@@ -30,8 +31,11 @@ func (rp *testDBRepo) SearchAvailabilityForAllRooms(_, _ time.Time) (rooms []mod
 }
 
 // GetRoomById gets a room by id
-func (rp *testDBRepo) GetRoomById(_ int) (models.Room, error) {
+func (rp *testDBRepo) GetRoomById(id int) (models.Room, error) {
 	var room models.Room
+	if id > 2 {
+		return room, errors.New("some error")
+	}
 
 	return room, nil
 }

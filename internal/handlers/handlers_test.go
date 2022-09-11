@@ -23,86 +23,73 @@ var theTests = []struct {
 	params             []postData
 	expectedStatusCode int
 }{
+	{
+		name:               "home",
+		url:                "/",
+		method:             "GET",
+		expectedStatusCode: http.StatusOK,
+	},
+	{
+		name:               "about",
+		url:                "/about",
+		method:             "GET",
+		expectedStatusCode: http.StatusOK,
+	},
+	{
+		name:               "generals-quarters",
+		url:                "/generals-quarters",
+		method:             "GET",
+		expectedStatusCode: http.StatusOK,
+	},
+	{
+		name:               "majors-suite",
+		url:                "/majors-suite",
+		method:             "GET",
+		expectedStatusCode: http.StatusOK,
+	},
+	{
+		name:               "search-availability",
+		url:                "/search-availability",
+		method:             "GET",
+		expectedStatusCode: http.StatusOK,
+	},
+	{
+		name:               "contact",
+		url:                "/contact",
+		method:             "GET",
+		expectedStatusCode: http.StatusOK,
+	},
 	// {
-	// 	name:               "home",
-	// 	url:                "/",
-	// 	method:             "GET",
-	// 	params:             []postData{},
-	// 	expectedStatusCode: http.StatusOK,
+	//     name:   "post-search-availability",
+	//     url:    "/search-availability",
+	//     method: "POST",
+	//     params: []postData{
+	//         {key: "start", value: "2020-01-01"},
+	//         {key: "end", value: "2020-01-01"},
+	//     },
+	//     expectedStatusCode: http.StatusOK,
 	// },
 	// {
-	// 	name:               "about",
-	// 	url:                "/about",
-	// 	method:             "GET",
-	// 	params:             []postData{},
-	// 	expectedStatusCode: http.StatusOK,
+	//     name:   "post-search-availability-json",
+	//     url:    "/search-availability-json",
+	//     method: "POST",
+	//     params: []postData{
+	//         {key: "start", value: "2020-01-01"},
+	//         {key: "end", value: "2020-01-01"},
+	//     },
+	//     expectedStatusCode: http.StatusOK,
 	// },
 	// {
-	// 	name:               "generals-quarters",
-	// 	url:                "/generals-quarters",
-	// 	method:             "GET",
-	// 	params:             []postData{},
-	// 	expectedStatusCode: http.StatusOK,
-	// },
-	// {
-	// 	name:               "majors-suite",
-	// 	url:                "/majors-suite",
-	// 	method:             "GET",
-	// 	params:             []postData{},
-	// 	expectedStatusCode: http.StatusOK,
-	// },
-	// {
-	// 	name:               "search-availability",
-	// 	url:                "/search-availability",
-	// 	method:             "GET",
-	// 	params:             []postData{},
-	// 	expectedStatusCode: http.StatusOK,
-	// },
-	// {
-	// 	name:               "contact",
-	// 	url:                "/contact",
-	// 	method:             "GET",
-	// 	params:             []postData{},
-	// 	expectedStatusCode: http.StatusOK,
-	// },
-	// {
-	// 	name:               "make-reservation",
-	// 	url:                "/make-reservation",
-	// 	method:             "GET",
-	// 	params:             []postData{},
-	// 	expectedStatusCode: http.StatusOK,
-	// },
-	// {
-	// 	name:   "post-search-availability",
-	// 	url:    "/search-availability",
-	// 	method: "POST",
-	// 	params: []postData{
-	// 		{key: "start", value: "2020-01-01"},
-	// 		{key: "end", value: "2020-01-01"},
-	// 	},
-	// 	expectedStatusCode: http.StatusOK,
-	// },
-	// {
-	// 	name:   "post-search-availability-json",
-	// 	url:    "/search-availability-json",
-	// 	method: "POST",
-	// 	params: []postData{
-	// 		{key: "start", value: "2020-01-01"},
-	// 		{key: "end", value: "2020-01-01"},
-	// 	},
-	// 	expectedStatusCode: http.StatusOK,
-	// },
-	// {
-	// 	name:   "post-make-reservation",
-	// 	url:    "/make-reservation",
-	// 	method: "POST",
-	// 	params: []postData{
-	// 		{key: "first_name", value: "John"},
-	// 		{key: "last_name", value: "Smith"},
-	// 		{key: "email", value: "john.smith@gmail.com"},
-	// 		{key: "phone", value: "555-444-666"},
-	// 	},
-	// 	expectedStatusCode: http.StatusOK,
+	//     name:   "post-make-reservation",
+	//     url:    "/make-reservation",
+	//     method: "POST",
+	//     params: []postData{
+	//         {key: "first_name", value: "John"},
+	//         {key: "last_name", value: "Smith"},
+	//         {key: "email", value: "john.smith@gmail.com"},
+	//         {key: "phone", value: "555-444-666"},
+	//     },
+	//     expectedStatusCode: http.StatusOK,
 	// },
 }
 
@@ -161,6 +148,30 @@ func TestRepository_Reservation(t *testing.T) {
 	handler.ServeHTTP(rr, req)
 
 	if rr.Code != http.StatusOK {
+		t.Errorf("Reservation handler returns wrong status code: got %d, want %d", rr.Code, http.StatusOK)
+	}
+
+	// Test case where reservation is not in session (reset everything)
+	req, _ = http.NewRequest("GET", "/make-reservation", nil)
+	ctx = getCtx(req)
+	req = req.WithContext(ctx)
+	rr = httptest.NewRecorder()
+
+	handler.ServeHTTP(rr, req)
+	if rr.Code != http.StatusTemporaryRedirect {
+		t.Errorf("Reservation handler returns wrong status code: got %d, want %d", rr.Code, http.StatusOK)
+	}
+
+	// Test with non-existent room
+	req, _ = http.NewRequest("GET", "/make-reservation", nil)
+	ctx = getCtx(req)
+	req = req.WithContext(ctx)
+	rr = httptest.NewRecorder()
+	reservation.RoomID = 100
+	session.Put(ctx, "reservation", reservation)
+
+	handler.ServeHTTP(rr, req)
+	if rr.Code != http.StatusTemporaryRedirect {
 		t.Errorf("Reservation handler returns wrong status code: got %d, want %d", rr.Code, http.StatusOK)
 	}
 }
