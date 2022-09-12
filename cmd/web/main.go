@@ -13,6 +13,7 @@ import (
 	"learn-golang/internal/render"
 	"log"
 	"net/http"
+	"net/smtp"
 	"os"
 	"time"
 )
@@ -34,6 +35,13 @@ func main() {
 	defer func(SQL *sql.DB) {
 		_ = SQL.Close()
 	}(db.SQL)
+
+	from := "me@here.com"
+	auth := smtp.PlainAuth("", from, "", "localhost")
+	err = smtp.SendMail("localhost:1025", auth, from, []string{"you@there.com"}, []byte("Hello, world!"))
+	if err != nil {
+		log.Println(err)
+	}
 
 	fmt.Println(fmt.Sprintf("Starting application on port %s", port))
 
