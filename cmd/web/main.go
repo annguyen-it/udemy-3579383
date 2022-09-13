@@ -13,7 +13,6 @@ import (
 	"learn-golang/internal/render"
 	"log"
 	"net/http"
-	"net/smtp"
 	"os"
 	"time"
 )
@@ -35,13 +34,19 @@ func main() {
 	defer func(SQL *sql.DB) {
 		_ = SQL.Close()
 	}(db.SQL)
+	defer close(app.MailChan)
 
-	from := "me@here.com"
-	auth := smtp.PlainAuth("", from, "", "localhost")
-	err = smtp.SendMail("localhost:1025", auth, from, []string{"you@there.com"}, []byte("Hello, world!"))
-	if err != nil {
-		log.Println(err)
-	}
+	fmt.Println("Starting mail listener...")
+	listenForMail()
+
+	// msg := models.MailData{
+	//     To:      "john@do.ca",
+	//     From:    "me@here.com",
+	//     Subject: "Some subject",
+	//     Content: "",
+	// }
+	//
+	// app.MailChan <- msg
 
 	fmt.Println(fmt.Sprintf("Starting application on port %s", port))
 
@@ -60,6 +65,9 @@ func run() (*driver.DB, error) {
 	gob.Register(models.User{})
 	gob.Register(models.Room{})
 	gob.Register(models.Restriction{})
+
+	mailChan := make(chan models.MailData)
+	app.MailChan = mailChan
 
 	// change this to true when in production
 	app.InProduction = false
