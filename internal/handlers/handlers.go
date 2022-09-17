@@ -170,6 +170,8 @@ func (rp *Repository) PostReservation(w http.ResponseWriter, r *http.Request) {
 		Content: htmlMessage,
 	}
 
+	rp.App.MailChan <- msg
+
 	// send notification to proper owner
 	htmlMessage = fmt.Sprintf(
 		`
@@ -179,10 +181,11 @@ func (rp *Repository) PostReservation(w http.ResponseWriter, r *http.Request) {
 	)
 
 	msg = models.MailData{
-		To:      "me@here.com",
-		From:    "me@here.com",
-		Subject: "Reservation Notification",
-		Content: htmlMessage,
+		To:       "me@here.com",
+		From:     "me@here.com",
+		Subject:  "Reservation Notification",
+		Content:  htmlMessage,
+		Template: "basic.html",
 	}
 
 	rp.App.MailChan <- msg
