@@ -39,3 +39,16 @@ func (rp *testDBRepo) GetRoomById(id int) (models.Room, error) {
 
 	return room, nil
 }
+
+func (rp *testDBRepo) GetUserById(_ int) (models.User, error) {
+	var u models.User
+	return u, nil
+}
+
+func (rp *testDBRepo) UpdateUser(_ models.User) error {
+	return nil
+}
+
+func (rp *testDBRepo) Authenticate(_, _ string) (int, string, error) {
+	return 0, "", nil
+}
