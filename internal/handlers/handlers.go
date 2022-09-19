@@ -378,3 +378,11 @@ func (rp *Repository) BookRoom(w http.ResponseWriter, r *http.Request) {
 
 	http.Redirect(w, r, "/make-reservation", http.StatusSeeOther)
 }
+
+func (rp *Repository) ShowLogin(w http.ResponseWriter, r *http.Request) {
+	_ = render.Template(
+		w, r, "login.page.tmpl", &models.TemplateData{
+			Form: forms.New(nil),
+		},
+	)
+}
