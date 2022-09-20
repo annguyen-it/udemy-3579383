@@ -13,6 +13,7 @@ import (
 	"learn-golang/internal/render"
 	"learn-golang/internal/repository"
 	"learn-golang/internal/repository/dbrepo"
+	"log"
 	"net/http"
 	"strconv"
 	"time"
@@ -385,4 +386,35 @@ func (rp *Repository) ShowLogin(w http.ResponseWriter, r *http.Request) {
 			Form: forms.New(nil),
 		},
 	)
+}
+
+// PostShowLogin handles logging the user in
+func (rp *Repository) PostShowLogin(w http.ResponseWriter, r *http.Request) {
+	_ = rp.App.Session.RenewToken(r.Context())
+
+	err := r.ParseForm()
+	if err != nil {
+		log.Println(err)
+	}
+
+	form := forms.New(r.PostForm)
+	form.Required("email", "password")
+	if !form.Valid() {
+		// TODO
+	}
+
+	email := r.Form.Get("email")
+	password := r.Form.Get("password")
+
+	id, _, err := rp.DB.Authenticate(email, password)
+	if err != nil {
+		log.Println(err)
+		rp.App.Session.Put(r.Context(), "error", "Invalid login credentials")
+		http.Redirect(w, r, "/user/login", http.StatusSeeOther)
+		return
+	}
+
+	rp.App.Session.Put(r.Context(), "user_id", id)
+	rp.App.Session.Put(r.Context(), "flash", "Logged in successfully")
+	http.Redirect(w, r, "/", http.StatusSeeOther)
 }
